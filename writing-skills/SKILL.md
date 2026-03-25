@@ -79,6 +79,19 @@ your-skill/
 
 ---
 
+## Step 0 — Capture Intent
+
+Before writing anything, clarify what the skill should do. Two common entry points:
+
+**From scratch:** Ask the user:
+1. What should this skill enable the agent to do?
+2. When should it trigger? (what phrases/contexts)
+3. What's the expected output format?
+
+**From an existing conversation:** The user says "turn this into a skill" after a workflow they liked. Extract from the conversation history: tools used, sequence of steps, corrections the user made, input/output formats observed. Draft these into a skill outline and confirm with the user before proceeding.
+
+---
+
 ## Step 1 — Choose a Design Pattern
 
 | Pattern | When to use | Key trait |
@@ -124,11 +137,17 @@ description: Creates skills by choosing a pattern, writing frontmatter, then tes
 description: Use when creating a new skill, editing an existing skill, or structuring a SKILL.md
 ```
 
-**Keyword coverage:** Use words agents would search for — error messages, symptoms, synonyms, tool names.
+**Be slightly pushy.** Current models tend to under-trigger skills — they skip skills they could benefit from. Err on the side of broader triggering conditions. Include edge cases and informal phrasings users would actually type.
+
+**Test with near-misses.** Think of 2-3 queries that *shouldn't* trigger the skill but share keywords with it. If the description would false-positive on those, narrow the language. Good descriptions trigger broadly on intent but don't fire on adjacent-but-wrong queries.
+
+**Keyword coverage:** Use words agents would search for — error messages, symptoms, synonyms, tool names. Include casual/colloquial phrasings, not just formal terms.
 
 ## Step 3 — Write the Body (L2)
 
-### Required Sections
+### Recommended Sections
+
+Not every skill needs all of these — adapt based on the skill type and complexity. But most skills benefit from:
 
 | Section | Purpose |
 |---------|---------|
@@ -148,6 +167,7 @@ description: Use when creating a new skill, editing an existing skill, or struct
 
 ### Writing Guidelines
 
+- **Explain the why.** LLMs have good theory of mind — when they understand *why* a rule exists, they generalize better than rote instructions. If you find yourself writing ALWAYS or NEVER in all caps, that's a yellow flag. Reframe: explain the reasoning so the model understands when the constraint matters and can judge edge cases.
 - One excellent example beats many mediocre ones. Pick the most relevant language and scenario
 - Code inline if < 50 lines. Use `Read 'references/x.md'` imperative for longer content
 - Flowcharts ONLY for non-obvious decision points. Use tables/lists for everything else
@@ -199,27 +219,26 @@ Rate each dimension. Aim for 4/5+ on all:
 | **Token efficiency** | L1 < 100 tokens? L2 < 2000 tokens? Heavy reference in L3? |
 | **Discoverability** | Description has "Use when..."? Keywords match search terms? Trigger phrases included? |
 
-## Step 6 — Test with a Real Agent
+## Step 6 — Design for Testability
 
-**A skill that reads well to a human may mislead an agent.** Have an agent actually execute the workflows.
+**A skill that reads well to a human may mislead an agent.** Design your skill so it can be tested effectively.
+
+### Testability Checklist
+
+- **Write 2-3 test prompts** — realistic things a user would actually say. Include at least one edge case.
+- **Define what "success" looks like** for each prompt — what should the agent produce? What should it NOT do?
+- **Identify baseline behavior** — what would the agent do *without* this skill? If the answer is "roughly the same thing," the skill isn't teaching anything new.
 
 ```bash
-# Symlink for fast iteration (no push needed)
+# Symlink for fast iteration during development (no push needed)
 ln -s /path/to/your-skill ~/.claude/skills/your-skill
 ```
 
-### What to Test
-
-1. **Trigger words** — does the skill activate on expected phrases?
-2. **Step 0** (if CLI wrapper) — correctly detects installed/not-installed/outdated?
-3. **Each workflow** — run through the top 3-5 examples end-to-end
-4. **Error paths** — trigger each troubleshooting scenario
-5. **Agent interpretation** — does the agent correctly interpret command output?
-6. **Cross-agent** — test with a different agent to catch assumptions
-
 ### Testing Methodology by Skill Type
 
-Different skill types need different test strategies. Read 'references/testing-methodology.md' for the complete methodology including pressure scenario design, RED-GREEN-REFACTOR cycle, rationalization tables, and red flags lists.
+Different skill types need different test strategies. Read 'references/testing-methodology.md' for methodology including pressure scenario design, RED-GREEN-REFACTOR cycle, and rationalization tables.
+
+**For full test/eval/iterate cycles** (spawning subagents, baseline comparison, quantitative grading, eval viewer), use the `skill-creator` skill — it provides the complete infrastructure for running and evaluating test cases at scale.
 
 ## Common Mistakes
 
